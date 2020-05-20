@@ -116,8 +116,6 @@ private:
 
 
 	int currentX,currentY;
-
-	std::string Start;
 	int start[3][3];
 	std::vector<Node*> gc;
 

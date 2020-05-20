@@ -22,8 +22,6 @@ AEightPuzzleBlockGrid::AEightPuzzleBlockGrid()
 	Size = 3;
 	BlockSpacing = 300.f;
 
-	Start = std::string("012378654");
-
 	blocks = std::vector<AEightPuzzleBlock*>(9);
 }
 
@@ -32,58 +30,57 @@ void AEightPuzzleBlockGrid::BeginPlay()
 {
 	Super::BeginPlay();
 
+	
+}
+
+void AEightPuzzleBlockGrid::SetupLayout(FString layout)
+{
 	// Number of blocks
 	const int32 NumBlocks = Size * Size;
 
-	// Loop to spawn each block
-	for(int32 BlockIndex=0; BlockIndex<NumBlocks; BlockIndex++)
+	if (blocks.size())
 	{
-		const float XOffset = (BlockIndex/Size) * BlockSpacing; // Divide by dimension
-		const float YOffset = (BlockIndex%Size) * BlockSpacing; // Modulo gives remainder
+		for (AEightPuzzleBlock* block : blocks)
+		{
+			if (block)
+			{
+				block->Destroy();
+				block = nullptr;
+			}
+		}
+
+	}
+
+	// Loop to spawn each block
+	for (int32 BlockIndex = 0; BlockIndex < NumBlocks; BlockIndex++)
+	{
+		const float XOffset = (BlockIndex / Size) * BlockSpacing; // Divide by dimension
+		const float YOffset = (BlockIndex % Size) * BlockSpacing; // Modulo gives remainder
 
 		// Make position vector, offset from Grid location
 		const FVector BlockLocation = FVector(XOffset, YOffset, 0.f) + GetActorLocation();
 
 		// Spawn a block
-		AEightPuzzleBlock* NewBlock = GetWorld()->SpawnActor<AEightPuzzleBlock>(PuzzleBlockClass,BlockLocation, FRotator(0,0,0));
+		AEightPuzzleBlock* NewBlock = GetWorld()->SpawnActor<AEightPuzzleBlock>(PuzzleBlockClass, BlockLocation, FRotator(0, 0, 0));
 
 		// Tell the block about its owner
 		if (NewBlock != nullptr)
 		{
 			NewBlock->OwningGrid = this;
-// 			char num = Start[BlockIndex];
-// 			if (num == '8')
-// 			{
-// 				currentX = (BlockIndex / Size);
-// 				currentY = (BlockIndex % Size);
-// 			}
-// 
-//  			int number = std::atoi(&num);
-//  			start[(BlockIndex / Size)][(BlockIndex % Size)] = number;
-//  			NewBlock->GetNumber() = number;
-//  			NewBlock->GetScoreText()->SetText(FString::FromInt(NewBlock->GetNumber()));
- 			blocks[BlockIndex]=NewBlock;
-		}
-	}
-}
+			char num = layout[BlockIndex];
+			if (num == '0')
+			{
+				currentX = (BlockIndex / Size);
+				currentY = (BlockIndex % Size);
+				NewBlock->SetActorHiddenInGame(true);
+			}
 
-void AEightPuzzleBlockGrid::SetupLayout(FString layout)
-{
-	// Loop to spawn each block
-	for (int32 BlockIndex = 0; BlockIndex < layout.Len(); BlockIndex++)
-	{
-		char num = layout[BlockIndex];
-		
-		if (num == '8')
-		{
-			currentX = (BlockIndex / Size);
-			currentY = (BlockIndex % Size);
+			int number = std::atoi(&num);
+			start[(BlockIndex / Size)][(BlockIndex % Size)] = number;
+			NewBlock->GetNumber() = number;
+			NewBlock->GetScoreText()->SetText(FString::FromInt(NewBlock->GetNumber()));
+			blocks[number] = NewBlock;
 		}
-
-		int number = std::atoi(&num);
-		start[(BlockIndex / Size)][(BlockIndex % Size)] = number;
-		blocks[BlockIndex]->GetNumber() = number;
-		blocks[BlockIndex]->GetScoreText()->SetText(FString::FromInt(blocks[BlockIndex]->GetNumber()));
 	}
 }
 
@@ -121,7 +118,6 @@ void AEightPuzzleBlockGrid::CalculatePath()
 				node->parent->child = node;
 				node = node->parent;
 			}
-			GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Blue, FString("Finish Calculation"));
 			DisplayGraphics(node->child);
 						
 			return;
@@ -151,8 +147,16 @@ void AEightPuzzleBlockGrid::DisplayGraphics(Node* node)
 		{
 			const FVector Location = GetActorLocation() + FVector(x * BlockSpacing, y * BlockSpacing, 0);
 			AEightPuzzleBlock* block = blocks[node->matrix[x][y]];
-			
-			move = container->JoinTweenMoveActorTo(block, Location);
+			//UE_LOG(LogTemp, Warning, TEXT("Block, X: %d Y: %d  Location:%s"), (int)x, (int)y, *block->GetActorLocation().ToString());
+			if (!FMath::IsNearlyZero((block->GetActorLocation() - Location).Size()))
+			{
+				//UE_LOG(LogTemp, Warning, TEXT("X %i, Y %i"), x, y);
+				move = container->JoinTweenMoveActorTo(block, Location);
+			}
+// 			else
+// 			{
+// 				GEngine->AddOnScreenDebugMessage(x + y * Size, 5.0f, FColor::Blue, FString("Distance is almost zero"));
+// 			}
 		}
 	}
 
@@ -162,12 +166,10 @@ void AEightPuzzleBlockGrid::DisplayGraphics(Node* node)
 
 			if (node->child)
 			{
-				GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Blue, FString("It works"));
 				DisplayGraphics(node->child);
 			}
 			else
 			{
-				GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Blue, FString("No child"));
 				for (Node* n : gc)
 				{
 					delete n;
