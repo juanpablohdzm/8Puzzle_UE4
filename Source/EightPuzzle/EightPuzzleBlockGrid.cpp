@@ -158,7 +158,7 @@ void AEightPuzzleBlockGrid::DisplayGraphics(Node* node)
 		}
 	}
 
-	container->OnTweenContainerEndDelegate.BindLambda([&, node](UTweenVector* move)
+	container->OnTweenContainerEndDelegate.BindLambda([&, node](UTweenContainer* move)
 	{
 		if (!node) return;
 

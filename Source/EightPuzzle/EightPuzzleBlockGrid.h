@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include <string>
-#include <algorithm>
 #include <vector>
 #include "EightPuzzleBlockGrid.generated.h"
 
