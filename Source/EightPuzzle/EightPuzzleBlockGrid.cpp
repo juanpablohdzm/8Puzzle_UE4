@@ -28,9 +28,7 @@ AEightPuzzleBlockGrid::AEightPuzzleBlockGrid()
 
 void AEightPuzzleBlockGrid::BeginPlay()
 {
-	Super::BeginPlay();
-
-	
+	Super::BeginPlay();	
 }
 
 void AEightPuzzleBlockGrid::SetupLayout(FString layout)
@@ -160,23 +158,23 @@ void AEightPuzzleBlockGrid::DisplayGraphics(Node* node)
 		}
 	}
 
-	move->OnTweenEndDelegate.BindLambda([&, node](UTweenVector* move)
-		{
-			if (!node) return;
+	container->OnTweenContainerEndDelegate.BindLambda([&, node](UTweenVector* move)
+	{
+		if (!node) return;
 
-			if (node->child)
+		if (node->child)
+		{
+			DisplayGraphics(node->child);
+		}
+		else
+		{
+			for (Node* n : gc)
 			{
-				DisplayGraphics(node->child);
+				delete n;
 			}
-			else
-			{
-				for (Node* n : gc)
-				{
-					delete n;
-				}
-				gc.clear();
-			}
-		});
+			gc.clear();
+		}
+	});
 }
 
 void AEightPuzzleBlockGrid::SolvePuzzle()
